@@ -1,11 +1,10 @@
-# Project 2: Movie Rating Prediction (Recommender System Lab)
+# Project 1: Movie Rating Prediction (Recommender System Lab)
 
 A small, tested, end-to-end pipeline that predicts how a member would rate a movie
 they have not seen yet, then uses those predictions to suggest what to watch next.
-Same skeleton as Project 1 (`src/` package, `tests/`, CLI); only the data step, the
-checks and the models change.
+Built step by step following [ROADMAP.md](ROADMAP.md).
 
-> Status: scaffold only. Sections below describe the plan; results get filled in as we build.
+> Status: folders and roadmap only; code is written by hand, one step at a time. Sections below describe the plan; results get filled in as we build.
 
 ## The business problem (in simple words)
 
@@ -48,7 +47,7 @@ load + validate  ->  profile  ->  split  ->  fit predictors  ->  tune  ->  selec
 Metrics: RMSE, MAE, and coverage (share of rows a neighborhood model could predict
 without falling back to the baseline).
 
-## Folder structure
+## Planned folder structure (files appear as each roadmap step is done)
 
 ```
 Recommender system/

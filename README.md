@@ -1,7 +1,7 @@
 # Foundation & Advanced ML
 
-A learning curriculum, built project by project. Each project is a small, tested,
-production-style pipeline that reuses the same blueprint:
+A learning curriculum, built project by project by hand, with Claude as guide and roadmap
+maker. Each project is a small, tested, production-style pipeline that reuses the same blueprint:
 
 ```
 src/<package>/   data -> features -> models -> training -> evaluation -> inference -> cli
@@ -18,11 +18,16 @@ to advanced topics (recommender systems and beyond).
 
 | # | Project | Topic | Status |
 |---|---|---|---|
-| 1 | Customer Intelligence ML-Lab | Churn classification | to be added |
-| 2 | [Recommender system](Recommender%20system/) | Rating prediction, collaborative filtering | scaffolded |
+| 1 | [Recommender system](Recommender%20system/) | Rating prediction, collaborative filtering | roadmap ready, code not started |
 
 ## Conventions
 
-- Reference material (exercise PDFs, original datasets) lives in `Dump/` and is **not** committed.
+- `Dump/` holds the reference material (exercise briefs, original datasets) each project is built from. It is **not** committed.
 - Data and generated outputs (`data/raw`, `artifacts`, `reports`) are git-ignored in every project.
 - Each project has its own README explaining its business problem and flow.
+
+## References
+
+- **Theory and concepts:** *Data Mining for Business Analytics*, Shmueli, Bruce, Gedeck, Patel, Wali.
+- **Approach and code patterns:** *Approaching (Almost) Any Machine Learning Problem*, Abhishek Thakur.
+- Code written here aims to be production quality and deployment ready. The books are references, not templates, so the code may differ from them.
