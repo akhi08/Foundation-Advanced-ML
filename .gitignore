@@ -1,0 +1,18 @@
+# Reference material (briefs + original datasets) stays local
+Dump/
+*.pdf
+
+# Per-project generated data and outputs (regenerate, never commit)
+**/data/raw/*
+**/data/processed/*
+**/artifacts/*
+**/reports/*
+!**/.gitkeep
+
+# Python / tooling
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+.DS_Store
