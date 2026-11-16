@@ -61,6 +61,7 @@ Recommender system/
 │   ├── models.py           # baselines + neighborhood predictors
 │   ├── tuning.py           # parameter sensitivity sweeps
 │   ├── evaluation.py       # RMSE, MAE, coverage
+│   ├── stats.py            # (stretch) confidence intervals, model comparison tests, A/B test toolkit
 │   ├── training.py         # select -> refit -> test once -> save
 │   ├── inference.py        # top-N recommendations + explanations
 │   └── cli.py              # terminal commands
