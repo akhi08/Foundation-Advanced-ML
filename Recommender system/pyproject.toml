@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "jupyter", "nbconvert"]
+dev = ["pytest", "jupyter", "nbconvert","ruff"]
 surprise = ["scikit-surprise"]
 
 [tool.setuptools.packages.find]
