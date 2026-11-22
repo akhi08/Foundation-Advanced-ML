@@ -1,35 +1,56 @@
-from recsys_lab.data import load_ratings
+"""Split the ratings and build the fitting matrix.
+
+Promises:
+- The outer split holds out TEST_SIZE as test; the rest is split again into
+  fitting and validation (VALID_SIZE). Same seed gives the same split.
+- No row appears in two sets.
+- Rows whose user or movie is absent from the reference data are dropped.
+- The matrix has users as rows, movies as columns, NaN where nothing was rated.
+"""
+from __future__ import annotations
+
+from typing import NamedTuple
+
+import pandas as pd
 from sklearn.model_selection import train_test_split
-from recsys_lab.config import TEST_SIZE,RANDOM_STATE,VALID_SIZE
 
-ratings = load_ratings()
-
-def splitting(ratings):
-    """Splitting our data into train , valid, test"""
-    outer_train_df,test_df = train_test_split(ratings,test_size=TEST_SIZE,random_state=RANDOM_STATE)
-    fitting_df,validation_df = train_test_split(outer_train_df,test_size = VALID_SIZE ,random_state=RANDOM_STATE)
-    return outer_train_df,test_df,fitting_df,validation_df
-
-def filter(outer_train_df,test_df,fitting_df,validation_df):
-    known_users_fit = set(fitting_df['user_id'].unique())
-    known_movies_fit = set(fitting_df['movie_id'].unique())
-
-    validation_filtered_df = validation_df[
-                validation_df['user_id'].isin(known_users_fit)&
-                validation_df['movie_id'].isin(known_movies_fit)
-    ].copy()
+from recsys_lab.config import RANDOM_STATE, TEST_SIZE, VALID_SIZE
 
 
-    known_users_outer = set(outer_train_df['user_id'].unique())
-    known_movies_outer = set(outer_train_df['movie_id'].unique())
+class Splits(NamedTuple):
+    outer_train: pd.DataFrame
+    test: pd.DataFrame
+    fitting: pd.DataFrame
+    validation: pd.DataFrame
 
-    test_filtered_df = test_df[
-                test_df['user_id'].isin(known_users_outer)&
-                test_df['movie_id'].isin(known_movies_outer)
-    ].copy()
 
-    return test_filtered_df,validation_filtered_df
+def split_ratings(
+    ratings: pd.DataFrame,
+    test_size: float = TEST_SIZE,
+    valid_size: float = VALID_SIZE,
+    random_state: int = RANDOM_STATE,
+) -> Splits:
+    """Split ratings into outer_train/test, then outer_train into fitting/validation."""
+    outer_train, test = train_test_split(ratings, test_size=test_size, random_state=random_state)
+    fitting, validation = train_test_split(outer_train, test_size=valid_size, random_state=random_state)
+    return Splits(outer_train, test, fitting, validation)
 
-def matrix(fitting_df):
-    fitting_matrix=fitting_df.pivot(index='user_id',columns='movie_id',value='rating')
-    return fitting_matrix
+
+def filter_to_known(rows: pd.DataFrame, reference: pd.DataFrame) -> pd.DataFrame:
+    """Keep rows whose user AND movie both appear in the reference data."""
+    known_user = rows["user_id"].isin(reference["user_id"])
+    known_movie = rows["movie_id"].isin(reference["movie_id"])
+    return rows[known_user & known_movie].copy()
+
+
+def build_matrix(ratings: pd.DataFrame) -> pd.DataFrame:
+    """User-movie matrix: users as rows, movies as columns, NaN where not rated."""
+    return ratings.pivot(index="user_id", columns="movie_id", values="rating")
+
+
+# How a caller uses it
+
+# splits = split_ratings(load_ratings())
+# validation = filter_to_known(splits.validation, splits.fitting)
+# test = filter_to_known(splits.test, splits.outer_train)
+# matrix = build_matrix(splits.fitting)
