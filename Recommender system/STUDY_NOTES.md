@@ -171,6 +171,70 @@ Findings (fitting data): 34% of user pairs are NaN (fewer than 2 shared movies).
 | Does a worse RMSE prove a worse method? | No. It is one split, one setting, and a small gap. Needs a confidence interval on the paired difference. |
 | Are fallback rows excluded from RMSE? | No. They get the movie-mean prediction and are scored with everyone else. |
 
+## 11. Item-item cosine
+m = movie we predict for, j = another movie, u = a user, r(u,m) = rating of u for m (blank = 0)
+```
+                 Σ over users u of  r(u,m) · r(u,j)
+sim(m, j)  =  ─────────────────────────────────────────
+              √( Σ r(u,m)² )  ·  √( Σ r(u,j)² )
+
+                            Σ over j in N of  sim(m,j) · ( r(u,j) − r̄(j) )
+r̂(u, m)  =  r̄(m)  +  ─────────────────────────────────────────────
+                            Σ over j in N of  sim(m,j)
+```
+N = movies that user u rated, with sim > 0, overlap >= 3 (users shared), top k = 20.
+
+| User-user | Item-item |
+|---|---|
+| similarity table 943 x 943 | 1620 x 1620 |
+| overlap = movies shared: `rated @ rated.T` | overlap = users shared: `rated.T @ rated` |
+| centered by user mean (`sub(..., axis=0)`) | centered by movie mean (`sub(..., axis=1)`) |
+| neighbors = users who rated this movie | neighbors = movies this user rated |
+| `centered.loc[neighbors, movie]` | `item_centered.loc[user, neighbors]` |
+
+Result: RMSE 0.928, MAE 0.728, coverage 0.992 (about 130 fallback rows). Best so far, 0.015 better than user-user cosine (one split: check with a paired comparison later).
+Why lower coverage: rare movies have few co-raters, so few neighbors pass overlap >= 3.
+
+| Question | Short answer |
+|---|---|
+| When is item-item preferred? | More users than items and stable item taste; item neighbors are steadier than user neighbors, and similarities can be precomputed. |
+| Why does a silent mix-up happen with .loc? | Row labels are user ids and column labels are movie ids; using the wrong one can still run and give wrong numbers. |
+
+## 12. Item-item adjusted cosine
+u = user, m and j = movies, r̄(u) = user u's mean over all their ratings
+```
+                  Σ over users u of  ( r(u,m) − r̄(u) ) · ( r(u,j) − r̄(u) )
+adj_sim(m, j) = ───────────────────────────────────────────────────────────
+                √( Σ ( r(u,m) − r̄(u) )² )  ·  √( Σ ( r(u,j) − r̄(u) )² )
+```
+Only the similarity table changes (cosine on the user-centered table, movies as rows). Same predictor and overlap table as item-item cosine.
+
+| Model | RMSE | MAE | Coverage |
+|---|---|---|---|
+| Item-item cosine | 0.928 | 0.728 | 0.992 |
+| Item-item adjusted cosine | 0.931 | 0.728 | 0.991 |
+
+Essentially tied (gap 0.003 is noise). The sweeps (significance weighting, shrinkage) may change the ranking.
+
+| Question | Short answer |
+|---|---|
+| Pearson (user-user) vs adjusted cosine? | Pearson compares users and uses only shared movies (blanks ignored, means over shared movies). Adjusted cosine compares movies, subtracts each user's overall mean, blanks become 0 (neutral after centering). |
+| Why center by the USER mean for item similarity? | Removes user generosity so movies are compared by relative opinion. Centering by movie mean removes the wrong bias. |
+
+## 13. Sensitivity sweeps (rules from the PDF)
+- Run on the strongest neighborhood variant by validation RMSE; vary ONE parameter at a time, others at base (k = 20, min overlap = 3). Report validation RMSE, MAE, coverage.
+- Values: k = 5, 10, 20, 50, 100; min overlap = 1, 3, 10; significance beta = 5, 10, 20, 50; shrinkage beta = 0, 1, 2, 5, 10, 20.
+- Significance weighting REPLACES the overlap floor: weight = sim × min(beta, overlap) / beta.
+- Shrinkage adds beta to the denominator: Σ(w · centered) / (Σ w + beta).
+- Non-positive similarities are ineligible. Fallback = the matching movie-mean baseline. Clip to 1-5.
+- Section D: compare all six models on identical validation rows, pick without test, refit on outer train, report test RMSE/MAE/coverage on the same eligible test rows; compare actual vs predicted for two test ratings across models; top-5 for one user with supporting rated titles and similarities from the frozen model; cold start for new member and new movie with one fallback each.
+
+| Question | Short answer |
+|---|---|
+| How many neighbors is best? | Not knowable in advance; that is what the k sweep measures on validation. Small k = noisy, large k = weak neighbors dilute the average. |
+| What does min overlap 3 mean? | The two compared things share at least 3 co-rated items: for users, 3 movies both rated; for movies, 3 users who rated both. |
+| Why tune on validation, not test? | Test is used once at the end, otherwise the test score is optimistic (we would have tuned to it). |
+
 ## Open questions (add the answers as we go)
 - Why does shrinkage help for sparse neighbors?
 - Why fall back to the movie mean when no neighbor qualifies?
