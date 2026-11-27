@@ -235,6 +235,28 @@ Essentially tied (gap 0.003 is noise). The sweeps (significance weighting, shrin
 | What does min overlap 3 mean? | The two compared things share at least 3 co-rated items: for users, 3 movies both rated; for movies, 3 users who rated both. |
 | Why tune on validation, not test? | Test is used once at the end, otherwise the test score is optimistic (we would have tuned to it). |
 
+## 14. Sweep results: item-item cosine (validation)
+| Parameter | Value | RMSE | MAE | Coverage |
+|---|---|---|---|---|
+| k | 5 | 0.9625 | 0.7487 | 0.9924 |
+| k | 10 | 0.9363 | 0.7323 | 0.9924 |
+| k | 20 (base) | **0.9278** | **0.7275** | 0.9924 |
+| k | 50 | 0.9318 | 0.7322 | 0.9924 |
+| k | 100 | 0.9368 | 0.7372 | 0.9924 |
+| min overlap | 1 | **0.9212** | **0.7231** | 0.9999 |
+| min overlap | 3 (base) | 0.9278 | 0.7275 | 0.9924 |
+| min overlap | 10 | 0.9471 | 0.7420 | 0.9414 |
+
+- k: RMSE falls then rises, best at 20. Few neighbors = noisy; many = weak neighbors dilute.
+- Coverage does not change with k: a row is predictable if at least one neighbor passes the filters; k only caps how many are used.
+- Min overlap: a stricter floor lowers coverage (0.999 -> 0.941); those rows fall back to the movie mean and RMSE rises. Overlap 1 is best here, so a hard floor costs accuracy; significance weighting keeps low-overlap neighbors but down-weights them.
+- Gaps of 0.004 to 0.007 are small; only the trend is reliable from one split.
+
+| Question | Short answer |
+|---|---|
+| Why does coverage not depend on k? | Eligibility (rated, sim > 0, overlap >= floor) decides if a row has neighbors; k only limits how many. |
+| Why can a stricter overlap floor hurt RMSE? | Fewer rows get neighbor predictions; more rows use the weaker movie-mean fallback. |
+
 ## Open questions (add the answers as we go)
 - Why does shrinkage help for sparse neighbors?
 - Why fall back to the movie mean when no neighbor qualifies?
